@@ -30,25 +30,25 @@ speakers = data.new_get_speakers(test_path)
 number_classes=len(speakers)
 print("speakers",speakers)
 
-batch=data.my_wave_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker)
+#batch=data.my_wave_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker)
 #vald_batch=data.my_wave_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker,path=vald_path)
-X,Y=next(batch)
+#X,Y=next(batch)
 #batch=data.mfcc_batch_generator(batch_size=64)
-#batch=data.my_mfcc_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker)
+batch=data.my_mfcc_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker)
 #vald_batch=data.my_mfcc_batch_generator(batch_size=64, source=data.Source.DIGIT_WAVES, target=data.Target.speaker,path=vald_path)
 
 
 # Classification
 tflearn.init_graph(num_cores=8, gpu_memory_fraction=0.5)
 
-net = tflearn.input_data(shape=[None, 8192]) #Two wave chunks
-#net = tflearn.input_data(shape=[None,width,height])
+#net = tflearn.input_data(shape=[None, 8192]) #Two wave chunks
+net = tflearn.input_data(shape=[None,width,height])
 net = tflearn.fully_connected(net, 64)
 net = tflearn.dropout(net, 0.5)
 net = tflearn.fully_connected(net, number_classes, activation='softmax')
 net = tflearn.regression(net, optimizer='adam', loss='categorical_crossentropy')
 model = tflearn.DNN(net)
-model.fit(X, Y, n_epoch=100, show_metric=True, snapshot_step=100)
+#model.fit(X, Y, n_epoch=100, show_metric=True, snapshot_step=100)
 ########################################### MFCC net ######################################
 #net = tflearn.input_data(shape=[None,width,height])
 #net = tflearn.lstm(net, 128*4, dropout=0.5)
@@ -58,10 +58,10 @@ model.fit(X, Y, n_epoch=100, show_metric=True, snapshot_step=100)
 #model = tflearn.DNN(net, tensorboard_verbose=0)
 # Training
 
-#trainX, trainY = next(batch)
+trainX, trainY = next(batch)
 #testX, testY = next(vald_batch)
 #model.fit(trainX, trainY, n_epoch=100, validation_set=(testX, testY), show_metric=True, batch_size=batch_size)
-#model.fit(trainX, trainY, n_epoch=20000, show_metric=True, batch_size=batch_size)
+model.fit(trainX, trainY, n_epoch=20000, show_metric=True, batch_size=batch_size)
 
 
 ###########################################################################################

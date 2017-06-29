@@ -285,7 +285,7 @@ def my_filterbank_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, targ
 				labels = []
 
 def my_mfcc_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, target=Target.speaker,path=path):
-	if target == Target.speaker: speakers = get_speakers()
+	if target == Target.speaker: speakers = new_get_speakers(train_path)
 	batch_features = []
 	labels = []
 	files = os.listdir(path)
