@@ -6,9 +6,9 @@ import tflearn
 import speech_data
 
 learning_rate = 0.0001
-training_iters = 300000  # steps
+#training_iters = 300000  # steps
+training_iters = 30  # steps
 batch_size = 64
-
 width = 20  # mfcc features
 height = 80  # (max) length of utterance
 classes = 10  # digits

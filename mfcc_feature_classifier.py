@@ -82,7 +82,8 @@ def denseNet(net):
 # net=layer.net(simple_dense, data=batch,input_shape=[height,width],output_width=classes, learning_rate=learning_rate)
 # net=layer.net(model=alex,input_width= width*height,output_width=classes, learning_rate=learning_rate)
 # net=layer.net(model=denseConv,input_width= width*height,output_width=classes, learning_rate=learning_rate)
-net = layer.net(recurrent, data=batch, input_shape=[height, width], output_width=classes, learning_rate=learning_rate)
+#net = layer.net(recurrent, data=batch, input_shape=[height, width], output_width=classes, learning_rate=learning_rate)
+net = layer.net(recurrent, input_shape=[height, width], output_width=classes, learning_rate=learning_rate)
 
 # net.train(data=batch,batch_size=10,steps=500,dropout=0.6,display_step=1,test_step=1) # debug
 net.train(data=batch,batch_size=10,steps=training_iters,dropout=0.6,display_step=10,test_step=100) # test

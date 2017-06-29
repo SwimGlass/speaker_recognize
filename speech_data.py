@@ -23,6 +23,10 @@ try:
 	from six.moves import xrange  # pylint: disable=redefined-builtin
 except:
 	pass # fuck 2to3
+try:
+        from python_speech_features import logfbank
+except:
+	print("pip install python_speech_features; if you want filterbank_batch_generator")
 
 # TRAIN_INDEX='train_words_index.txt'
 # TEST_INDEX='test_words_index.txt'
@@ -30,7 +34,9 @@ SOURCE_URL = 'http://pannous.net/files/' #spoken_numbers.tar'
 DATA_DIR = 'data/'
 pcm_path = "data/spoken_numbers_pcm/" # 8 bit
 wav_path = "data/spoken_numbers_wav/" # 16 bit s16le
-path = pcm_path
+train_path = "data/data_thuyg20_sre/ubm/"
+#path = pcm_path
+path = train_path
 CHUNK = 4096
 test_fraction=0.1 # 10% of data for test / verification
 
@@ -152,7 +158,14 @@ def speaker(filename):  # vom Dateinamen
 	# if not "_" in file:
 	#   return "Unknown"
 	return filename.split("_")[1]
-
+def new_speaker(filename):
+    return filename.split("_")[0]
+def new_get_speakers(path):
+    files = os.listdir(path)
+    speakers=list(set(map(new_speaker,files)))
+    #print(len(files)," speakers: ",files)
+    return speakers
+    
 def get_speakers(path=pcm_path):
 	maybe_download(Source.DIGIT_SPECTROS)
 	maybe_download(Source.DIGIT_WAVES)
@@ -183,7 +196,7 @@ def load_wav_file(name):
 	return chunk
 
 
-def spectro_batch_generator(batch_size=10,width=64,source_data=Source.DIGIT_SPECTROS,target=Target.digits):
+def spectro_batch_generator(batch_size=10,width=64,source=Source.DIGIT_SPECTROS,target=Target.digits):
 	# maybe_download(Source.NUMBER_IMAGES , DATA_DIR)
 	# maybe_download(Source.SPOKEN_WORDS, DATA_DIR)
 	path=maybe_download(source_data, DATA_DIR)
@@ -249,6 +262,76 @@ def mfcc_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, target=Target
 				yield batch_features, labels  # basic_rnn_seq2seq inputs must be a sequence
 				batch_features = []  # Reset for next batch
 				labels = []
+
+def my_filterbank_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, target=Target.speaker,path=path):
+	if target == Target.speaker: speakers = get_speakers()
+	batch_features = []
+	labels = []
+	files = os.listdir(path)
+        while True:
+		shuffle(files)
+		print("loaded batch of %d files" % len(files))
+		for wav in files:
+			if not wav.endswith(".wav"):continue
+			if target==Target.speaker: labels.append(one_hot_from_item(speaker(wav), speakers))
+			else: raise Exception("todo : Target.word label!")
+                        (rate,sig) = wav.read(path+wav)
+			fbank_feat = logfbank(sig,rate)
+                        batch_waves.append(chunk)
+			# batch_waves.append(chunks[input_width])
+			if len(batch_waves) >= batch_size:
+				yield batch_waves, labels
+				batch_waves = []  # Reset for next batch
+				labels = []
+
+def my_mfcc_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, target=Target.speaker,path=path):
+	if target == Target.speaker: speakers = get_speakers()
+	batch_features = []
+	labels = []
+	files = os.listdir(path)
+	while True:
+		print("loaded batch of %d files" % len(files))
+		shuffle(files)
+		for file in files:
+			if not file.endswith(".wav"): continue
+			wave, sampling_rate = librosa.load(path+file, mono=True)
+			mfcc = librosa.feature.mfcc(wave, sampling_rate)
+			if target==Target.speaker: label=one_hot_from_item(new_speaker(file), speakers)
+			else: raise Exception("todo : labels for Target!")
+			labels.append(label)
+			# print(np.array(mfcc).shape)
+			mfcc=np.pad(mfcc,((0,0),(0,80-len(mfcc[0]))), mode='constant', constant_values=0)
+			batch_features.append(np.array(mfcc))
+			if len(batch_features) >= batch_size:
+				# if target == Target.word:  labels = sparse_labels(labels)
+				# labels=np.array(labels)
+				# print(np.array(batch_features).shape)
+				# yield np.array(batch_features), labels
+				# print(np.array(labels).shape) # why (64,) instead of (64, 15, 32)? OK IFF dim_1==const (20)
+				yield batch_features, labels  # basic_rnn_seq2seq inputs must be a sequence
+				batch_features = []  # Reset for next batch
+				labels = []
+def my_wave_batch_generator(batch_size=10,source=Source.DIGIT_WAVES,target=Target.digits,path=path): #speaker
+	if target == Target.speaker: speakers=new_get_speakers(train_path)
+	batch_waves = []
+	labels = []
+	# input_width=CHUNK*6 # wow, big!!
+	files = os.listdir(path)
+	while True:
+		shuffle(files)
+		print("loaded batch of %d files" % len(files))
+		for wav in files:
+			if not wav.endswith(".wav"):continue
+			if target==Target.speaker: labels.append(one_hot_from_item(new_speaker(wav), speakers))
+			else: raise Exception("todo : Target.word label!")
+			chunk = load_wav_file(path+wav)
+			batch_waves.append(chunk)
+			# batch_waves.append(chunks[input_width])
+			if len(batch_waves) >= batch_size:
+				yield batch_waves, labels
+				batch_waves = []  # Reset for next batch
+				labels = []
+
 
 
 # If you set dynamic_pad=True when calling tf.train.batch the returned batch will be automatically padded with 0s. Handy! A lower-level option is to use tf.PaddingFIFOQueue.

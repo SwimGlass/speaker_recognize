@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/swimglass/tensorflow-speech-recognition/tflearn.lstm.model"
+all_model_checkpoint_paths: "/home/swimglass/tensorflow-speech-recognition/tflearn.lstm.model"
